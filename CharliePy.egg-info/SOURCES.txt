@@ -1,8 +1,0 @@
-README
-setup.py
-Analysis_Catalogue/__init__.py
-Analysis_Catalogue/analysis_catalogue.py
-CharliePy.egg-info/PKG-INFO
-CharliePy.egg-info/SOURCES.txt
-CharliePy.egg-info/dependency_links.txt
-CharliePy.egg-info/top_level.txt
