@@ -25,21 +25,9 @@ class Catalogue:
     #def __repr__(self):
     #   return repr((self.xx_part, self.yy_part, self.zz_part, self.mm_part, self.id_part))    
         
-    def distance(self, xc=None, yc=None, zc=None):
+    def distance(self, xc=0, yc=0, zc=0, a_s=1, b_s=1, c_s=1):
         
-        if xc is None:
-            
-            xc = 0.
-            
-        if yc is None:
-            
-            yc = 0.
-            
-        if zc is None:
-            
-            zc = 0.
-        
-        return np.sqrt((self.xx_part-xc)**2+(self.yy_part-yc)**2+(self.zz_part-zc)**2)
+        return np.sqrt(((self.xx_part-xc)/a_s)**2+((self.yy_part-yc)/b_s)**2+((self.zz_part-zc)/c_s)**2)
     
     
     
@@ -94,32 +82,81 @@ class Catalogue:
 
         com = self.centre_of_mass(refine=True)
                 
-        xx_com_shifted = self.xx_part - com[0]
-        yy_com_shifted = self.yy_part - com[1]
-        zz_com_shifted = self.zz_part - com[2]
+        xx_com_shifted = self.xx_part #+ com[0]
+        yy_com_shifted = self.yy_part #+ com[1]
+        zz_com_shifted = self.zz_part #+ com[2]
 
-        i_xx =  np.sum((yy_com_shifted**2 + zz_com_shifted**2) * self.mm_part) # I_xx
-        i_yy =  np.sum((xx_com_shifted**2 + zz_com_shifted**2) * self.mm_part) # I_yy
-        i_zz =  np.sum((xx_com_shifted**2 + yy_com_shifted**2) * self.mm_part) # I_zz
-        i_xy = -np.sum(xx_com_shifted * yy_com_shifted         * self.mm_part) # I_xy = I_yx
-        i_yz = -np.sum(yy_com_shifted * zz_com_shifted         * self.mm_part) # I_yz = I_zy
-        i_xz = -np.sum(xx_com_shifted * zz_com_shifted         * self.mm_part) # I_xz = I_zx
+        i_xx =  np.sum(xx_com_shifted * xx_com_shifted *self.mm_part)
+        i_yy =  np.sum(yy_com_shifted * yy_com_shifted *self.mm_part)
+        i_zz =  np.sum(zz_com_shifted * zz_com_shifted *self.mm_part)        
+        i_xy =  np.sum(xx_com_shifted * yy_com_shifted * self.mm_part) # I_xy = I_yx
+        i_yz =  np.sum(yy_com_shifted * zz_com_shifted * self.mm_part) # I_yz = I_zy
+        i_xz =  np.sum(xx_com_shifted * zz_com_shifted * self.mm_part) # I_xz = I_zx
+
+        inertia=np.array([i_xx,i_yy,i_zz])
+        eigenvalues, eigenvectors = np.linalg.eigh([[i_xx, i_xy, i_xz], [i_xy, i_yy, i_yz], [i_xz, i_yz, i_zz]])
+
+#        idx = np.argsort(inertia)[::-1]   
+#        eigenvalues = eigenvalues[idx]
+#        eigenvectors = eigenvectors[:,idx]
+
+        sort_indices = np.argsort(eigenvalues)[::-1]
+        c1_v1, c2_v1, c3_v1 = eigenvectors[:, sort_indices[0]]  # Eigenvector with largest eigenvalue
+        c1_v2, c2_v2, c3_v2 = eigenvectors[:, sort_indices[1]]
         
-#        print(i_xx,i_yy,i_zz,i_xy,i_yz,i_xz)
-        
-        w, v = np.linalg.eig(np.mat([[i_xx, i_xy, i_xz], [i_xy, i_yy, i_yz], [i_xz, i_yz, i_zz]]))
-        
-        a_semiaxis = 1./np.sqrt(w[0])
-        b_semiaxis = 1./np.sqrt(w[1])/a_semiaxis
-        c_semiaxis = 1./np.sqrt(w[2])/a_semiaxis
-        
-        print(a_semiaxis, b_semiaxis, c_semiaxis)
-         
-#        ecc = np.sqrt(1-(b_semiaxis/a_semiaxis)**2)
-        
-        return a_semiaxis, b_semiaxis, c_semiaxis
+        semiaxis = np.sqrt(eigenvalues)
+        print(semiaxis)
+        return semiaxis, eigenvalues, eigenvectors
     
-    
+    def rotation(self, coords1, coords2): # , eigenvalues, eigenvectors):
+# =============================================================================
+#         delta = eigenvectors[0][0]*(eigenvectors[1][1]*eigenvectors[2][2]-eigenvectors[1][2]*eigenvectors[2][1])\
+#                 eigenvectors[0][1]*(eigenvectors[1][0]*eigenvectors[2][2]-eigenvectors[1][2]*eigenvectors[2][0])\
+#                 eigenvectors[0][2]*(eigenvectors[1][0]*eigenvectors[2][1]-eigenvectors[1][1]*eigenvectors[2][0])
+#         
+#         delta_1 = 
+#         
+#         delta_2 = 
+#         
+#         delta_3 = 
+# =============================================================================
+
+        coords = np.vstack([coords1, coords2])
+        
+        cov = np.cov(coords)
+        evals, evecs = np.linalg.eig(cov)
+        print(evals)
+        sort_indices = np.argsort(evals)[::-1]
+        c1_v1, c2_v1 = evecs[:, sort_indices[0]]  # Eigenvector with largest eigenvalue
+        c1_v2, c2_v2 = evecs[:, sort_indices[1]]
+
+        theta = np.tanh((c1_v1)/(c2_v1))  
+        rotation_mat = np.matrix([[np.cos(theta), -np.sin(theta)],\
+                                  [np.sin(theta),  np.cos(theta)]])
+        transformed_mat = rotation_mat * coords
+        
+        c1_transformed, c2_transformed = transformed_mat.A
+                
+        return c1_transformed, c2_transformed, theta, c1_v1, c2_v1, c1_v2, c2_v2
+        
+# =============================================================================
+#     def circularization(self, eigenvalues, eigenvectors=0):
+#         
+#         a_semiaxis, b_semiaxis, c_semiaxis= np.sqrt(eigenvalues)
+#         
+#         b_a_2 = b_semiaxis/a_semiaxis
+#         c_a_2 = c_semiaxis/a_semiaxis
+#         a_b_2 = a_semiaxis/b_semiaxis
+#         c_b_2 = c_semiaxis/b_semiaxis
+#         a_c_2 = a_semiaxis/c_semiaxis
+#         b_c_2 = b_semiaxis/c_semiaxis
+# 
+#         
+# 
+#         return b_a_2, c_a_2
+# =============================================================================
+
+
     def sort_for_id(self):        
         
         data = []
@@ -172,9 +209,9 @@ class Catalogue:
         
         temp_counts2 = [np.sum(counts2[(i-n):(i+n+1)])/len(counts2[(i-n):(i+n+1)]) if (i-n) >= 0 else np.sum(counts2[:(i+n+1)])/len(counts2[:(i+n+1)]) for i in range(0,len(counts2))]
     
-        counts1 = temp_counts1
+        counts1 = np.array(temp_counts1)
     
-        counts2 = temp_counts2    
+        counts2 = np.array(temp_counts2)    
         
         counts = np.stack((counts1, counts2), axis=-1)
     
@@ -182,7 +219,7 @@ class Catalogue:
         
         counts = np.array([(counts[i][0] + ratio_imf*counts[i][1])/(counts[i][0] + counts[i][1]) for i in range(len(counts))])
 
-        return counts, bins
+        return counts, bins, counts1, counts2
     
     
 
