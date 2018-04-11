@@ -101,25 +101,17 @@ class Catalogue:
 #        eigenvectors = eigenvectors[:,idx]
 
         sort_indices = np.argsort(eigenvalues)[::-1]
-        c1_v1, c2_v1, c3_v1 = eigenvectors[:, sort_indices[0]]  # Eigenvector with largest eigenvalue
+        c1_v1, c2_v1, c3_v1 = eigenvectors[:, sort_indices[0]]
         c1_v2, c2_v2, c3_v2 = eigenvectors[:, sort_indices[1]]
         
         semiaxis = np.sqrt(eigenvalues)
         print(semiaxis)
         return semiaxis, eigenvalues, eigenvectors
     
-    def rotation(self, coords1, coords2): # , eigenvalues, eigenvectors):
-# =============================================================================
-#         delta = eigenvectors[0][0]*(eigenvectors[1][1]*eigenvectors[2][2]-eigenvectors[1][2]*eigenvectors[2][1])\
-#                 eigenvectors[0][1]*(eigenvectors[1][0]*eigenvectors[2][2]-eigenvectors[1][2]*eigenvectors[2][0])\
-#                 eigenvectors[0][2]*(eigenvectors[1][0]*eigenvectors[2][1]-eigenvectors[1][1]*eigenvectors[2][0])
-#         
-#         delta_1 = 
-#         
-#         delta_2 = 
-#         
-#         delta_3 = 
-# =============================================================================
+    def rotation(self, coords1, coords2):
+        
+        # WARNING - WORK IN PROGRESS FUNCTION
+
 
         coords = np.vstack([coords1, coords2])
         
@@ -138,23 +130,6 @@ class Catalogue:
         c1_transformed, c2_transformed = transformed_mat.A
                 
         return c1_transformed, c2_transformed, theta, c1_v1, c2_v1, c1_v2, c2_v2
-        
-# =============================================================================
-#     def circularization(self, eigenvalues, eigenvectors=0):
-#         
-#         a_semiaxis, b_semiaxis, c_semiaxis= np.sqrt(eigenvalues)
-#         
-#         b_a_2 = b_semiaxis/a_semiaxis
-#         c_a_2 = c_semiaxis/a_semiaxis
-#         a_b_2 = a_semiaxis/b_semiaxis
-#         c_b_2 = c_semiaxis/b_semiaxis
-#         a_c_2 = a_semiaxis/c_semiaxis
-#         b_c_2 = b_semiaxis/c_semiaxis
-# 
-#         
-# 
-#         return b_a_2, c_a_2
-# =============================================================================
 
 
     def sort_for_id(self):        
